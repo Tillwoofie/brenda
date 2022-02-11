@@ -20,7 +20,7 @@ from brenda import utils
 from brenda.error import ValueErrorRetry
 #gcp-related
 import googleapiclient.discovery
-import google-cloud-compute
+#import google-cloud-compute
 
 def gcp_creds(conf):
     return {
@@ -34,13 +34,14 @@ def get_conn(conf, resource_type="compute", api_version="v1"):
         raise ValueErrorRetry("Could not establish {} connection to region {}".format(resource_type, region))
     return conn
 
-def get_ce_instances_from_conn(conn, instance_ids=None, project_name, zone_name):
+def get_ce_instances_from_conn(conn, project_name, zone_name, instance_ids=None,):
     filter_args = {}
 
     all_instances = conn.instances().list(project=project_name, zone=zone_name).execute()
 
     if (all_instances.get('items')):
         if instance_ids:
+            pass
 
 
     if instance_ids:
@@ -52,4 +53,11 @@ def get_ce_instances(conf, instance_ids=None):
     conn = get_conn(conf, "compute")
     project = conf['GCP_PROJECT_NAME']
     zone = conf['GCP_ZONE_NAME']
-    return get_ce_instances_from_conn(conn, instance_ids, project, zone)
+    return get_ce_instances_from_conn(conn, project, zone, instance_ids)
+
+def config_file_name():
+    config = os.environ.get("BRENDA_CONFIG")
+    if not config:
+        home = os.path.expanduser("~")
+        config = os.path.join(home, ".brenda.conf")
+    return config

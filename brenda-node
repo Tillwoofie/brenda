@@ -93,9 +93,16 @@ Optional config vars:
     parser.add_option("-d", "--dry-run", action="store_true", dest="dry_run",
                       help="Download/mount project but don't render frames")
 
+    parser.add_option('-g', '--gcp', action="store_true", dest="use_gcp", default=False,
+                      help="Use GCP as the cloud platform.")
+
     # Get command line arguments...
     ( opts, args ) = parser.parse_args()
     #print "OPTS", (opts, args)
+
+    if opts.use_gcp:
+        print("Using GCP currently needs implementing. exiting.")
+        sys.exit(1)
 
     # Get configuration
     conf = config.Config(opts.config, 'BRENDA_', default_stdin=True)

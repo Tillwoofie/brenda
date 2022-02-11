@@ -97,12 +97,19 @@ Examples:
     parser.add_option("-H", "--hard", action="store_true", dest="hard",
                       help="For reset, delete the SQS queue itself")
 
+    parser.add_option('-g', '--gcp', action="store_true", dest="use_gcp", default=False,
+                      help="Use GCP as the cloud platform.")
+
     # Get command line arguments...
     ( opts, args ) = parser.parse_args()
     #print "OPTS", (opts, args)
     if not args:
         print("no work, run with -h for usage", file=sys.stderr)
         sys.exit(2)
+
+    if opts.use_gcp:
+        print("Using GCP is currently not implemented, exiting.")
+        sys.exit(1)
 
     # Get configuration
     conf = config.Config(opts.config, 'BRENDA_')

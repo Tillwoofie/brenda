@@ -112,6 +112,10 @@ Examples:
         print >>sys.stderr, "no work, run with -h for usage"
         sys.exit(2)
 
+    if opts.use_gcp:
+        print("Use with GCP currently needs implementing, exiting.")
+        sys.exit(1)
+
     # Get configuration
     conf = config.Config(opts.config, 'BRENDA_')
     #print "CONFIG", conf
