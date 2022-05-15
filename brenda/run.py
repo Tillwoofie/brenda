@@ -15,12 +15,16 @@ from __future__ import print_function
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, time
-from brenda import aws, utils
+import os, time, sys
+from brenda import aws, gcp, utils
 from brenda.ami import AMI_ID
 import base64
 
 def demand(opts, conf):
+    if opts.use_gcp:
+        run_gcp(opts, conf, preempt=False)
+        print("Should never reach here, passed end of run_gcp")
+        sys.exit(3)
     ami_id = utils.get_opt(opts.ami, conf, 'AMI_ID', default=AMI_ID, must_exist=True)
     itype = brenda_instance_type(opts, conf)
     snapshots = aws.get_snapshots(conf)
@@ -60,6 +64,10 @@ def demand(opts, conf):
         print(reservation)
 
 def spot(opts, conf):
+    if opts.use_gcp:
+        run_gcp(opts, conf, preempt=True)
+        print("Should never reach here, passed end of run_gcp")
+        sys.exit(3)
     ami_id = utils.get_opt(opts.ami, conf, 'AMI_ID', default=AMI_ID, must_exist=True)
     price = utils.get_opt(opts.price, conf, 'BID_PRICE', must_exist=True)
     reqtype = 'persistent' if opts.persistent else 'one-time'
@@ -108,6 +116,68 @@ def spot(opts, conf):
         ec2 = aws.get_ec2_client(conf)
         reservation = ec2.request_spot_instances(**run_args)
         print(reservation)
+
+def run_gcp(opts, conf, preempt=True):
+    #ami_id = utils.get_opt(opts.ami, conf, 'AMI_ID', default=AMI_ID, must_exist=False)
+    bid_price = utils.get_opt(opts.price, conf, 'BID_PRICE', must_exist=False)
+    image_project = utils.get_opt(opts.image_project, conf, 'GCP_IMAGE_PROJECT', must_exist=True)
+    image_name = utils.get_opt(opts.image_name, conf, 'GCP_IMAGE_NAME', must_exist=True)
+    reqtype = 'persistent' if opts.persistent else 'one-time'
+    itype = brenda_instance_type(opts, conf) #TODO: check this for GCP.
+    snapshots = aws.get_snapshots(conf) #TODO: fix for GCP
+    bdm, snap_description, istore_dev = aws.blk_dev_map(opts, conf, itype, snapshots) #TODO: find equiv for GCP
+    script = startup_script(opts, conf, istore_dev) #TODO: Fix/crawl down for GCP.
+
+    instance_name = gcp.get_name_for_instance(conf)
+    instance_label = { 'usage': 'brenda' }
+    user_data = None #TODO: figure out if this is a thing for GCP.
+    if not opts.idle:
+        user_data = script
+
+    #TODO: Not sure what to do with these...
+    ssh_key_name = conf.get("SSH_KEY_NAME", "brenda")
+    sec_groups = (conf.get("SECURITY_GROUP", "brenda"),)
+
+    launch_spec = {}
+    launch_spec['name'] = instance_name
+    launch_spec['ImageId'] = ami_id #TODO: replace with "disks" section.
+    launch_spec['machineType'] = itype
+    launch_spec['labels'] = instance_label
+    launch_spec['UserData'] = user_data #TODO: change to GCP equiv.
+    launch_spec['KeyName'] = ssh_key_name
+    launch_spec['SecurityGroups'] = sec_groups
+    launch_spec['BlockDeviceMappings'] = bdm
+    if opts.availability_zone:
+         launch_spec['Placement'] = {'AvailabilityZone': opts.availability_zone}
+    run_args = {
+        'SpotPrice'         : price,
+        'Type'          : reqtype,
+        'InstanceCount'         : opts.n_instances,
+        'LaunchSpecification': launch_spec
+        }
+
+    print("----------------------------")
+    print("AMI ID:", ami_id)
+    print("Max bid price", price)
+    print("Request type:", reqtype)
+    print("Instance type:", itype)
+    print("Instance count:", opts.n_instances)
+    if opts.availability_zone:
+         print("Availability zone:", opts.availability_zone)
+    if snap_description:
+        print("Project EBS snapshot:", snap_description)
+    if istore_dev:
+        print("Instance store device:", istore_dev)
+    print("SSH key name:", ssh_key_name)
+    print("Security groups:", sec_groups)
+    print_script(opts, conf, script)
+    aws.get_done(opts, conf) # sanity check on DONE var
+    if not opts.dry_run:
+        ec2 = aws.get_ec2_client(conf)
+        reservation = ec2.request_spot_instances(**run_args)
+        print(reservation)
+
+    return False
 
 def price(opts, conf):
     ec2 = aws.get_ec2_client(conf)
@@ -162,6 +232,10 @@ def script(opts, conf):
     print(script)
 
 def init(opts, conf):
+
+    if opts.use_gcp:
+        gcp_init(opts, conf)
+
     ec2 = aws.get_ec2_client(conf)
 
     # create ssh key pair
@@ -209,6 +283,13 @@ def init(opts, conf):
                                                  IpProtocol='icmp')
         except Exception as e:
             print("Error creating security group", e)
+
+def gcp_init(opts, conf):
+    print("Currently init with gcp is not supported.")
+    print("Please add in your SSH key to the console manually")
+    print("and ensure that SSH (port 22) is allowed through the")
+    print("default firewall configs.")
+    sys.exit(1)
 
 def reset_keys(opts, conf):
     ec2 = aws.get_ec2_client(conf)

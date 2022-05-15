@@ -137,6 +137,10 @@ Examples:
 
     parser.add_option('-g', '--gcp', action="store_true", dest="use_gcp", default=False,
                       help="Use GCP as the cloud platform.")
+    parser.add_option('--gcp-image-project', dest="image_project",
+                      help="Specify the image project for use with GCP")
+    parser.add_option('--gcp-image-name', dest="image_name",
+                      help="Specify the image name for use with GCP")
 
     # Get command line arguments...
     ( opts, args ) = parser.parse_args()

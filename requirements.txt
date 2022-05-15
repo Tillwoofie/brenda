@@ -9,4 +9,5 @@ six==1.15.0
 urllib3==1.25.10
 #for GCP usage
 google-cloud-compute==1.0.0
+google-cloud-storage
 google-api-python-client
