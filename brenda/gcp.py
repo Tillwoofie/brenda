@@ -22,6 +22,7 @@ from brenda.error import ValueErrorRetry
 import googleapiclient.discovery
 #import google-cloud-compute
 from google.cloud import storage
+from google.oauth2 import service_account
 
 
 def gcp_creds(conf):
@@ -135,7 +136,9 @@ def put_gs_file(conf, bucktup, path, gsname):
     # object_ref = conn.Object(bucktup[1][0],bucktup[1][1] + s3name)
     # object_ref.put(Body=open(path, 'rb'), StorageClass='REDUCED_REDUNDANCY')
 
-    conn = storage.Client()
+    creds = get_gs_creds(conf)
+
+    conn = storage.Client(credentials=creds)
     buck = conn.bucket(bucktup[1][0])
     blob = buck.blob(bucktup[1][1] + gsname)
     print("Attempting up upload", path, "to", bucktup[1][0], "/", bucktup[1][1] + gsname)
@@ -170,3 +173,8 @@ def get_gs_output_bucket(conf):
     conn = storage.Client()
     buck = conn.bucket(bn[0])
     return buck, bn
+
+def get_gs_creds(conf):
+    cred_path = conf.get('GOOGLE_APPLICATION_CREDENTIALS')
+    credentials = service_account.Credentials.from_service_account_file(cred_path)
+    return credentials
