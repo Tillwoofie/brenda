@@ -59,7 +59,7 @@ def file_push_process(opts, args, conf, outdir):
         else:
             use_gcp = True
         if use_gcp:
-            bucktup = gcp.get_gs_output_bucket_name(conf)
+            bucktup = gcp.get_gs_output_bucket(conf)
         else:
             bucktup = aws.get_s3_output_bucket(conf)
         for dirpath, dirnames, filenames in os.walk(outdir):
