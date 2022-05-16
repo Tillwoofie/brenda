@@ -115,9 +115,12 @@ def gs_get(conf, gsurl, dest, etag=None):
     #     file_out.write(body)
     # return content_len, etag
     blob = buck.blob(gstup[1])
+    if etag is not None:
+        blob.download_to_filename(dest, if_etag_not_match=etag)
+    else:
+        blob.download_to_filename(dest)
     ret_etag = blob.etag
     content_len = blob.size
-    blob.download_to_filename(dest, if_etag_not_match=etag)
     return content_len, ret_etag
 
 
