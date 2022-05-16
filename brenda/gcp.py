@@ -139,7 +139,7 @@ def put_gs_file(conf, bucktup, path, gsname):
     buck = conn.bucket(bucktup[1][0])
     blob = buck.blob(bucktup[1][1] + gsname)
 
-    blob.upload_from_filename(path)
+    blob.upload_from_filename(path, content_type='image/aces')
 
 
 def get_gs_output_bucket_name(conf):
