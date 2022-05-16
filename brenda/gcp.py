@@ -136,6 +136,9 @@ def put_gs_file(conf, bucktup, path, gsname):
     # object_ref = conn.Object(bucktup[1][0],bucktup[1][1] + s3name)
     # object_ref.put(Body=open(path, 'rb'), StorageClass='REDUCED_REDUNDANCY')
 
+    utils.system(["gsutil", "cp", path, format_gs_url(bucktup, gsname)])
+    return None
+
     creds = get_gs_creds(conf)
 
     conn = storage.Client(credentials=creds)
