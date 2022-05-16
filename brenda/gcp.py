@@ -138,7 +138,7 @@ def put_gs_file(conf, bucktup, path, gsname):
     conn = storage.Client()
     buck = conn.bucket(bucktup[1][0])
     blob = buck.blob(bucktup[1][1] + gsname)
-
+    print("Attempting up upload", path, "to", bucktup[1][0], "/", bucktup[1][1] + gsname)
     blob.upload_from_filename(path, content_type='image/aces')
 
 
