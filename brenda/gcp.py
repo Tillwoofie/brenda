@@ -158,3 +158,12 @@ def format_gs_url(bucktup, gsname):
     bucktup is the return tuple of get_s3_output_bucket_name
     """
     return "gs://%s/%s%s" % (bucktup[1][0], bucktup[1][1], gsname)
+
+
+def get_gs_output_bucket(conf):
+    bn = get_gs_output_bucket_name(conf)
+    # conn = get_conn(conf, "s3")
+    # buck = conn.Bucket(bn[0])
+    conn = storage.Client()
+    buck = conn.bucket(bn[0])
+    return buck, bn
